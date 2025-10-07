@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <script rel="text/javascript" src="{{ url_for('static', filename='script/script.js') }}" ></script>
+</head>
+<script>
+async function updateData() {
+    const response = await fetch("/data");
+    const data = await response.json();
+    let test = data.a.toFixed(3);
+    let t1 = data.t1.toFixed(3);
+    let t2 = data.t2.toFixed(3);
+    document.getElementById("aValue").innerText = test;
+    document.getElementById("bValue").innerText = t1;
+    document.getElementById("yValue").innerText = t2;
+}
+
+// Update every 0.01 seconds
+setInterval(updateData, 2000);
+
+// Run immediately on page load
+updateData();
+</script>
+<body onload="reset()">
+    <!-- Example display -->
+<p>Time: <span id="aValue">{{ newA }}</span></p>
+<p>Time1: <span id="bValue">{{ newB }}</span></p>
+<p>Time2: <span id="yValue">{{ newY }}</span></p>
+
+<div class="selected m" id="nr0">
+<button onclick="sendSignal(1)" class="selected button" id="button0"><p>Stop1</p></button>
+<button onclick="sendSignal(2)" class="selected button" id="button0"><p>Stop2</p></button>
+</div>
+</body>
+</html>
