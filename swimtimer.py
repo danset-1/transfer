@@ -4,9 +4,13 @@ from typing import Dict, List, Optional
 import threading
 import socket
 import json
+from playsound3 import playsound
+import pygame
 
 HOST = '127.0.0.1'  # Listen on all interfaces
 PORT = 12345      # Port to listen on
+pygame.mixer.init()
+pygame.mixer.music.load("music/start.mp3")
 
 class SwimTimerApp:
     def __init__(self, root: tk.Tk, swimmers: List[str], max_laps: int = 8):
@@ -122,10 +126,19 @@ class SwimTimerApp:
 
     def start(self):
         if not self.running:
+            self.countdown(5)
             # Start or resume: record a fresh start_time
-            self.start_time = time.time()
-            self.running = True
-            self.update_timer()
+
+    def countdown(self, count):
+            if count > 0:
+                self.timer_label.config(text=str(count))
+                # schedule next countdown step after 1 second
+                self.root.after(1000, self.countdown, count - 1)
+            else:
+                pygame.mixer.music.play()
+                self.start_time = time.time()
+                self.running = True
+                self.update_timer()
 
     def stop(self):
         if self.running and self.start_time is not None:
