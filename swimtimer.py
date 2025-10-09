@@ -127,6 +127,7 @@ class SwimTimerApp:
     def start(self):
         if not self.running:
             self.countdown(5)
+            self.running = True
             # Start or resume: record a fresh start_time
 
     def countdown(self, count):
@@ -137,7 +138,7 @@ class SwimTimerApp:
             else:
                 pygame.mixer.music.play()
                 self.start_time = time.time()
-                self.running = True
+                # self.running = True
                 self.update_timer()
 
     def stop(self):
@@ -199,6 +200,9 @@ class SwimTimerApp:
         self.last_lap_elapsed[name] = elapsed
         self.laps[name].append(lap_time)
 
+        self.total_lap_time[name] += lap_time
+
+
         # Update labels
         row = self.row_widgets[name]
         row["lap_count_label"].config(text=str(len(self.laps[name])))
@@ -227,9 +231,12 @@ class SwimTimerApp:
         # ignore if swimmer already reached max laps
         if len(self.laps.get(name, [])) >= self.max_laps:
             return
-        elapsed = self._current_elapsed()
-        lap_time = float(lap)
-        self.last_lap_elapsed[name] = elapsed
+        
+        # elapsed = self._current_elapsed()
+        # lap_time = float(lap) 
+
+        lap_time = float(lap) - self.total_lap_time[name]
+        # self.last_lap_elapsed[name] = elapsed
         self.laps[name].append(lap_time)
 
         self.total_lap_time[name] += lap_time
