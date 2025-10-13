@@ -4,11 +4,10 @@ from typing import Dict, List, Optional
 import threading
 import socket
 import json
-from playsound3 import playsound
 import pygame
 
 HOST = '127.0.0.1'  # Listen on all interfaces
-PORT = 12345      # Port to listen on
+PORT = 5000      # Port to listen on
 pygame.mixer.init()
 pygame.mixer.music.load("music/start.mp3")
 
@@ -124,12 +123,14 @@ class SwimTimerApp:
             if len(self.laps.get(swimmer, [])) < self.max_laps:
                 self.record_lap(swimmer)
 
+    # Start the timer
     def start(self):
         if not self.running:
             self.countdown(5)
             self.running = True
             # Start or resume: record a fresh start_time
 
+    # Make a countdown before starting timer and play start sound 
     def countdown(self, count):
             if count > 0:
                 self.timer_label.config(text=str(count))
@@ -141,6 +142,7 @@ class SwimTimerApp:
                 # self.running = True
                 self.update_timer()
 
+    # Stop the timer and all lane times
     def stop(self):
         if self.running and self.start_time is not None:
             # Accumulate elapsed time and mark stopped
@@ -148,6 +150,7 @@ class SwimTimerApp:
             self.start_time = None
             self.running = False
 
+    # Resets all variables, if called while the timer is running it stops and resets the timer
     def reset(self):
         self.running = False
         self.start_time = None
@@ -164,6 +167,7 @@ class SwimTimerApp:
             row["total_label"].config(text="0.00")
             row["lap_count_label"].config(text="0")
 
+    # Update the timer
     def update_timer(self):
         # Always compute current elapsed and show it in the main timer.
         # Per-lane "Total Time" will use the same value/format so they match.
@@ -184,9 +188,11 @@ class SwimTimerApp:
                 row["total_label"].config(text=self._format_timer_display(self.total_lap_time[name]))
 
         # Continue updating repeatedly only when running
+        # Update every 0.05s 
         if self.running:
             self.root.after(50, self.update_timer)
 
+    # Record a lap time for a swimmer
     def record_lap(self, name: str):
         if not self.running:
             return  # ignore lap presses when timer is not running
@@ -223,6 +229,7 @@ class SwimTimerApp:
         if all(len(self.laps[s]) >= self.max_laps for s in self.swimmers):
             self.stop()
     
+    # Record a lap from an external time input
     def set_lap(self, lap: str,  name: str):
         # time = float(lap)
         if not self.running:
@@ -261,24 +268,6 @@ class SwimTimerApp:
         if all(len(self.laps[s]) >= self.max_laps for s in self.swimmers):
             self.stop()
 
-
-# # handle only PYTHON signal
-# def start_server(callback):
-#     def server_thread():
-#         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-#             s.bind((HOST, PORT))
-#             s.listen()
-#             print(f"Listening on port {PORT}...")
-#             while True:
-#                 conn, addr = s.accept()
-#                 with conn:
-#                     print(f"Connected by {addr}")
-#                     data = conn.recv(1024)
-#                     if data:
-#                         callback(json.loads(data.decode('utf-8')))
-
-#     threading.Thread(target=server_thread, daemon=True).start()
-
 def start_server(callback):
     def server_thread():
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -292,36 +281,7 @@ def start_server(callback):
 
     threading.Thread(target=server_thread, daemon=True).start()
 
-# # handle client for RUST only
-# def handle_client(conn, callback):
-#     with conn:
-#         while True:
-#             # Read the 4-byte big-endian length prefix
-#             len_bytes = conn.recv(4)
-#             if not len_bytes:
-#                 print("Client disconnected")
-#                 break
-#             msg_len = int.from_bytes(len_bytes, "big")
-
-#             # Read exactly msg_len bytes
-#             data = b""
-#             while len(data) < msg_len:
-#                 packet = conn.recv(msg_len - len(data))
-#                 if not packet:
-#                     break
-#                 data += packet
-
-#             if not data:
-#                 break
-
-#             try:
-#                 msg = json.loads(data.decode("utf-8"))
-#                 callback(msg)
-#             except Exception as e:
-#                 print("Invalid JSON or error:", e)
-#                 continue
-
-# Handle BOTH rust & python
+# Handle signals that comes in, can handle rust and python
 def handle_client(conn, callback):
     with conn:
         buffer = b""
@@ -360,6 +320,7 @@ def handle_client(conn, callback):
 
     print("Client disconnected.")
 
+# Take the data from the signal and call action based on the data
 def handle_message(msg):
     print("Received:", msg)
     # label.config(text=f"Message: {msg}")
